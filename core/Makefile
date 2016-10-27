@@ -8,10 +8,10 @@
 #
 
 CC= gcc
-DEPS = core.c imu.c braking.c lateral.c logging.c skates.c pod.c pod-helpers.c commands.c commander.c mux.c libBBBShims.c
+DEPS = bbb.c core.c imu.c braking.c lateral.c logging.c skates.c pod.c pod-helpers.c commands.c commander.c mux.c libBBBShims.c tests.c
 SOURCES= main.c
 EXECUTABLE = core
-CFLAGS += -std=gnu99 -DTESTING
+CFLAGS += -std=gnu99 -DTESTING # -DHAS_IMU
 LDFLAGS += -pthread
 
 all: $(EXECUTABLE)
@@ -19,7 +19,7 @@ all: $(EXECUTABLE)
 core: main.c $(DEPS)
 
 run: clean all
-	./$(EXECUTABLE)
+	./$(EXECUTABLE) -r
 
 clean:
-	rm -f *.o *~ $(EXECUTABLE)
+	rm -f *.o *~ *.log $(EXECUTABLE)

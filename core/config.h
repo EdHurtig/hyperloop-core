@@ -17,12 +17,20 @@
 #ifndef _OPENLOOP_POD_CONFIG_
 #define _OPENLOOP_POD_CONFIG_
 
-
+#ifdef __linux__
+#define BBB
+#endif
 // --------------------------
 // Branding
 // --------------------------
 #define POD_COPY_OWNER "OpenLoop - Controls Team"
 #define POD_COPY_YEAR "2016"
+#define BANNER "   ____                   __\n" \
+"  / __ \\____  ___  ____  / /   ____  ____  ____\n" \
+" / / / / __ \\/ _ \\/ __ \\/ /   / __ \\/ __ \\/ __ \\\n" \
+"/ /_/ / /_/ /  __/ / / / /___/ /_/ / /_/ / /_/ /\n" \
+"\\____/ .___/\\___/_/ /_/_____/\\____/\\____/ .___/ \n" \
+"    /_/                                /_/      \n"
 
 // --------------------------
 // PINS - List of pin numbers
@@ -32,9 +40,6 @@
 // --------------------------
 // Device Constants
 // --------------------------
-#define N_SKATE_SOLONOIDS 6
-#define N_SKATE_THERMOCOUPLES N_SKATE_SOLONOIDS
-
 #define N_EBRAKE_SOLONOIDS 2
 #define N_EBRAKE_PRESSURES N_EBRAKE_SOLONOIDS
 #define N_EBRAKE_THERMOCOUPLES N_EBRAKE_SOLONOIDS
@@ -67,7 +72,11 @@
 #define POD_SIGPANIC SIGUSR2
 
 // IMU Device
-#define IMU_DEVICE "/dev/cu.usbmodem-00000"
+#ifdef __linux__
+#define IMU_DEVICE "/dev/ttyUSB0"
+#else
+#define IMU_DEVICE "/dev/cu.usbserial-A600DTJI"
+#endif
 #define IMU_MESSAGE_SIZE 32
 
 // -------------------------
@@ -87,38 +96,60 @@
 // --------------------------------------------------------------------------
 // Each thread is a loop, how long should the thread sleep for each iteration
 // --------------------------------------------------------------------------
-#define CORE_THREAD_SLEEP 5000
+#define CORE_THREAD_SLEEP 0
 #define LOGGING_THREAD_SLEEP 5000
 
 // --------------
 // Debug Printing
 // --------------
+#define LVL_DEBUG 0
+#define LVL_VERBOSE 1
+#define LVL_INFO 2
+#define LVL_WARN 3
+#define LVL_NOTE 4
+#define LVL_ERROR 5
+#define LVL_FATAL 6
+
 #ifdef TESTING
 #define FLINE __FILE__ ":"  __XSTR__(__LINE__)
-#define output(prefix_, fmt_, ...) podLog((prefix_ "[%s] {" FLINE "} " \
-  fmt_ "\n"), __FUNCTION__, ##__VA_ARGS__)
-
+#define output(lvl, prefix_, fmt_, ...) podLog(lvl, (prefix_ "[%s] {" FLINE \
+  "} " fmt_ "\n"), __FUNCTION__, ##__VA_ARGS__)
 #else
-#define output(prefix_, fmt_, ...)                                           \
-  podLog((prefix_ fmt_), __FUNCTION__, ##__VA_ARGS__)
+#define output(lvl, prefix_, fmt_, ...)                                      \
+  podLog(lvl, (prefix_ fmt_), __FUNCTION__, ##__VA_ARGS__)
 #endif
-#define debug(fmt_, ...) output("[DEBUG] ", fmt_, ##__VA_ARGS__)
-#define warn(fmt_, ...) output("[WARN]  ", fmt_, ##__VA_ARGS__)
-#define error(fmt_, ...) output("[ERROR] ", fmt_, ##__VA_ARGS__)
-#define info(fmt_, ...) output("[INFO]  ", fmt_, ##__VA_ARGS__)
-#define note(fmt_, ...) output("[NOTE]  ", fmt_, ##__VA_ARGS__)
-#define fatal(fmt_, ...) output("[FATAL] ", fmt_, ##__VA_ARGS__)
+#define debug(fmt_, ...) output(0, "[DEBUG] ", fmt_, ##__VA_ARGS__)
+#define verbose(fmt_, ...) output(1, "[VERB]  ", fmt_, ##__VA_ARGS__)
+#define info(fmt_, ...) output(2, "[INFO]  ", fmt_, ##__VA_ARGS__)
+#define warn(fmt_, ...) output(3, "[WARN]  ", fmt_, ##__VA_ARGS__)
+#define note(fmt_, ...) output(4, "[NOTE]  ", fmt_, ##__VA_ARGS__)
+#define error(fmt_, ...) output(5, "[ERROR] ", fmt_, ##__VA_ARGS__)
+#define error_no(fmt_, ...) output(5, "[ERROR] ", fmt_ ": %s", ##__VA_ARGS__, strerror(errno))
+#define fatal(fmt_, ...) output(6, "[FATAL] ", fmt_, ##__VA_ARGS__)
 #define panic(subsystem, notes, ...)                                         \
   podInterruptPanic(subsystem, __FILE__, __LINE__, notes, ##__VA_ARGS__)
 
-// Helper that wraps setPodMode but adds file and line number
-// REVIEW: Probably should remove
-#define DECLARE_EMERGENCY(message)                                           \
-  setPodMode(Emergency, __FILE__ ":" __XSTR__(LINE__) message)
+// ---------------------
+// Logging Configuration
+// ---------------------
+#define LOG_FILE_PATH "./hyperloop-core.log"
+#define LOG_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
+#define MAX_PACKET_SIZE 1024
+#ifndef LOG_SVR_NAME
+#define LOG_SVR_NAME "pod-server.openloopalliance.com"
+#endif
+#ifndef LOG_SVR_PORT
+#define LOG_SVR_PORT 7778
+#endif
+#define MAX_LOG_LINE 512
+#define LOG_BUF_SIZE MAX_LOG_LINE * 50
+#define MIN_NET_LOG_LVL LVL_WARN
+
 
 // ------------------
 // Primary Braking Thresholds
 // ------------------
+#define WHEEL_SOLONOID_PINS { "P8_28", "P8_30", "P8_32" }
 
 /// 0.8 G = 0.8 * 9.8 m/s/s * 1000 mm / m
 #define PRIMARY_BRAKING_ACCEL_X_MIN -5.88 // -0.6 G => mm/s/s
@@ -141,6 +172,8 @@
 // ------------------
 // Emergency Braking Thresholds
 // ------------------
+#define EBRAKE_SOLONOID_PINS { "P8_41", "P8_43" }
+
 /// NOMINAL: 1.2 G = 1.2 * 9.8 m/s/s * 1000 mm / m
 #define EBRAKE_BRAKING_ACCEL_X_MIN -7.84  // -0.8 G => mm/s/s
 #define EBRAKE_BRAKING_ACCEL_X_NOM -11.76 // -1.2 G => mm/s/s
@@ -184,6 +217,11 @@
 // ---------------------
 // Skate config
 // ---------------------
+#define N_SKATE_SOLONOIDS 6
+#define N_SKATE_THERMOCOUPLES N_SKATE_SOLONOIDS
+
+#define SKATE_SOLONOID_PINS { "P8_27", "P8_29", "P8_31", "P8_33", "P8_35", "P8_39" }
+
 #define MIN_REGULATOR_THERMOCOUPLE_TEMP 5L // celcius?
 
 #define SKATE_OVERRIDE_FRONT_LEFT  0x0000000000000040
@@ -208,6 +246,7 @@
                               (SKATE_OVERRIDE_REAR_LEFT), \
                               (SKATE_OVERRIDE_REAR_RIGHT) }
 
+
 // ---------------------
 // Muxxing
 // ---------------------
@@ -215,17 +254,6 @@
 #define N_MUX_SELECT_PINS 4
 
 #define MUX_0_PINS { }
-
-// ---------------------
-// Logging Configuration
-// ---------------------
-#define LOG_FILE_PATH "./hyperloop-core.log"
-#define LOG_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
-#define MAX_PACKET_SIZE 1024
-#define LOG_SVR_NAME "pod-server.openloopalliance.com"
-#define LOG_SVR_PORT 7778
-#define MAX_LOG_LINE 512
-#define LOG_BUF_SIZE MAX_LOG_LINE * 50
 
 // ---------------
 // Command Control

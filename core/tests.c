@@ -16,11 +16,22 @@
 
 #include "pod.h"
 
-void testIMUAccelerationComputations() {}
+int selfTest(pod_state_t * state) {
+  int i;
 
-int main() {
-  initializePodState();
-  pod_state_t *state = getPodState();
+  for (i=0; i < N_SKATE_SOLONOIDS; i++) {
+    warn("Activating Skate Solonoid: %d", i);
+    bbb_setGpioValue(state->skate_solonoid_pins[i].gpio, 0);
 
-  testIMUAccelerationComputations();
+    sleep(1);
+  }
+
+  for (i=0; i < N_SKATE_SOLONOIDS; i++) {
+    warn("Deactiveating Skate Solonoid: %d", i);
+    bbb_setGpioValue(state->skate_solonoid_pins[i].gpio, 0);
+
+    sleep(1);
+  }
+
+  return 0;
 }

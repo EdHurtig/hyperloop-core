@@ -15,7 +15,7 @@
  ****************************************************************************/
 
 #include "cdefs.h"
-#include "libBBB.h"
+#include "bbb.h"
 #include "config.h"
 #include <pthread.h>
 #include <sys/queue.h>
@@ -59,10 +59,53 @@ typedef struct {
   int select_pins[N_MUX_SELECT_PINS];
   int line_pin;
 } pod_mux_t;
+
+// All units are assumed to be in meters
+typedef struct {
+  // header
+  uint32_t hd;
+  // linear acceleration X
+  float x;
+  // linear acceleration Y
+  float y;
+  // linear acceleration Z
+  float z;
+  // angular acceleration X
+  float wx;
+  // angular acceleration Y
+  float wy;
+  // angular acceleration Z
+  float wz;
+  // sequence byte
+  uint8_t sequence;
+  // status byte
+  uint8_t status;
+  // temperature byte
+  uint16_t temperature;
+  // CRC check
+  uint32_t crc;
+} imu_datagram_t;
+
+typedef struct {
+  int gpio;
+} pod_pin_t;
+
+#define IMU_DATAGRAM_INITIALIZER { \
+  .hd = 0, \
+  .x = 0.0, \
+  .y = 0.0, \
+  .z = 0.0, \
+  .wx = 0.0, \
+  .wy = 0.0, \
+  .wz = 0.0 \
+}
 /**
  * Defines the master state of the pod
  */
 typedef struct pod_state {
+  imu_datagram_t imu[8];
+  int imu_i;
+
   pod_value_t accel_x;
   pod_value_t accel_y;
   pod_value_t accel_z;
@@ -88,15 +131,18 @@ typedef struct pod_state {
   pod_value_t skate_rear_right_z;
 
   // Skate Sensors and Solonoids
+  pod_pin_t skate_solonoid_pins[N_SKATE_SOLONOIDS];
   pod_value_t skate_solonoids[N_SKATE_SOLONOIDS];
   pod_value_t skate_thermocouples[N_SKATE_SOLONOIDS];
 
   // EBrake Senors and Solonoids
+  pod_pin_t ebrake_solonoid_pins[N_EBRAKE_SOLONOIDS];
   pod_value_t ebrake_solonoids[N_EBRAKE_SOLONOIDS];
   pod_value_t ebrake_pressures[N_EBRAKE_PRESSURES];
   pod_value_t ebrake_thermocouples[N_EBRAKE_SOLONOIDS];
 
   // Wheel Brake Sensors and Solonoids
+  pod_pin_t wheel_solonoid_pins[N_WHEEL_SOLONOIDS];
   pod_value_t wheel_solonoids[N_WHEEL_SOLONOIDS];
   pod_value_t wheel_pressures[N_WHEEL_PRESSURES];
   pod_value_t wheel_thermocouples[N_WHEEL_THERMOCOUPLES];
@@ -156,7 +202,7 @@ typedef struct log {
 /**
  * Sends the given message to all logging destinations
  */
-int podLog(char *fmt, ...);
+int podLog(int lvl, char *fmt, ...);
 
 /**
  * @brief Set the new state of the pod's control algorithms.
@@ -238,7 +284,7 @@ void podInterruptPanic(int subsystem, char *file, int line, char *notes, ...);
  *
  * Returns the fd of the IMU (also stored in global imuFd var) or -1 on fail
  */
-int imuConnect(void);
+int imuConnect(char * device);
 
 void pod_exit(int code);
 
@@ -248,5 +294,8 @@ int setEBrakes(int no, int val, bool override);
 
 void setManual(uint64_t surfaces, bool override);
 bool isManual(uint64_t surface);
+
+int selfTest(pod_state_t *state);
+int setupPins(pod_state_t *state);
 
 #endif

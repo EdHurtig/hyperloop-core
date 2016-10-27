@@ -21,6 +21,17 @@ char *pod_mode_names[N_POD_STATES] = {"Boot",     "Ready",   "Pushing",
                                       "Shutdown", "(null)"};
 
 pod_state_t __state = {
+    .imu = {
+      IMU_DATAGRAM_INITIALIZER,
+      IMU_DATAGRAM_INITIALIZER,
+      IMU_DATAGRAM_INITIALIZER,
+      IMU_DATAGRAM_INITIALIZER,
+      IMU_DATAGRAM_INITIALIZER,
+      IMU_DATAGRAM_INITIALIZER,
+      IMU_DATAGRAM_INITIALIZER,
+      IMU_DATAGRAM_INITIALIZER
+    },
+    .imu_i = 0,
     .mode = Boot,
     .initialized = false,
     .start = 0ULL,
@@ -109,16 +120,27 @@ int initializePodState(void) {
   pthread_rwlock_init(&(state->mode_mutex), NULL);
 
   int i;
+  char *skate_pins[N_SKATE_SOLONOIDS] = SKATE_SOLONOID_PINS;
   for (i = 0; i < N_SKATE_SOLONOIDS; i++) {
     pthread_rwlock_init(&(state->skate_solonoids[i].lock), NULL);
+    pthread_rwlock_init(&(state->skate_thermocouples[i].lock), NULL);
+    state->skate_solonoid_pins[i].gpio = bbb_getGpio(bbb_getIndexByStr(skate_pins[i]));
   }
 
+  char *ebrake_pins[N_EBRAKE_SOLONOIDS] = EBRAKE_SOLONOID_PINS;
   for (i = 0; i < N_EBRAKE_SOLONOIDS; i++) {
     pthread_rwlock_init(&(state->ebrake_solonoids[i].lock), NULL);
+    pthread_rwlock_init(&(state->ebrake_pressures[i].lock), NULL);
+    pthread_rwlock_init(&(state->ebrake_thermocouples[i].lock), NULL);
+    state->ebrake_solonoid_pins[i].gpio = bbb_getGpio(bbb_getIndexByStr(ebrake_pins[i]));
   }
 
+  char *wheel_pins[N_WHEEL_SOLONOIDS] = WHEEL_SOLONOID_PINS;
   for (i = 0; i < N_WHEEL_SOLONOIDS; i++) {
     pthread_rwlock_init(&(state->wheel_solonoids[i].lock), NULL);
+    pthread_rwlock_init(&(state->wheel_pressures[i].lock), NULL);
+    pthread_rwlock_init(&(state->wheel_thermocouples[i].lock), NULL);
+    state->wheel_solonoid_pins[i].gpio = bbb_getGpio(bbb_getIndexByStr(wheel_pins[i]));
   }
 
   // assert(sem_init(&(state->boot_sem), 0, 0) == 0);
@@ -152,6 +174,11 @@ pod_mode_t getPodMode(void) {
 }
 
 int setPodMode(pod_mode_t new_mode, char *reason, ...) {
+  pod_mode_t old_mode = getPodMode();
+  if (old_mode == new_mode) {
+    return 0;
+  }
+
   static char msg[MAX_LOG_LINE];
 
   va_list arg;
@@ -159,7 +186,6 @@ int setPodMode(pod_mode_t new_mode, char *reason, ...) {
   vsnprintf(&msg[0], MAX_LOG_LINE, reason, arg);
   va_end(arg);
   pod_state_t *state = getPodState();
-  pod_mode_t old_mode = getPodMode();
 
   warn("Pod Mode Transition %s => %s. reason: %s", pod_mode_names[old_mode],
        pod_mode_names[new_mode], msg);

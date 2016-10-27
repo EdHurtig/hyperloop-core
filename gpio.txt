@@ -1,0 +1,81 @@
+
+echo 86 > /sys/class/gpio/export
+echo high > /sys/class/gpio/gpio86/direction
+echo 1 > /sys/class/gpio/gpio86/value
+sleep 1
+echo 0 > /sys/class/gpio/gpio86/value
+sleep 1
+echo 1 > /sys/class/gpio/gpio86/value
+sleep 1
+echo 0 > /sys/class/gpio/gpio86/value
+
+echo 86 > /sys/class/gpio/export
+echo high > /sys/class/gpio/gpio86/direction
+
+echo 86 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio86/direction
+
+echo 87 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio87/direction
+
+echo 10 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio10/direction
+
+echo 9 > /sys/class/gpio/export
+echo out> /sys/class/gpio/gpio9/direction
+
+echo 8 > /sys/class/gpio/export
+echo out> /sys/class/gpio/gpio8/direction
+
+echo 76 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio76/direction
+
+echo 74 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio74/direction
+
+echo 72 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio72/direction
+
+
+export value=1
+while [ true ]; do
+
+echo $value > /sys/class/gpio/gpio86/value
+
+echo $value > /sys/class/gpio/gpio87/value
+
+echo $value > /sys/class/gpio/gpio10/value
+
+echo $value > /sys/class/gpio/gpio9/value
+
+echo $value > /sys/class/gpio/gpio8/value
+
+echo $value > /sys/class/gpio/gpio76/value
+
+echo $value > /sys/class/gpio/gpio74/value
+
+echo $value > /sys/class/gpio/gpio72/value
+
+if [ $value -eq 1 ]; then
+  value=0
+else
+  value=1
+fi
+
+done
+
+
+echo high > /sys/class/gpio/gpio87/direction
+echo 1 > /sys/class/gpio/gpio87/value
+echo high > /sys/class/gpio/gpio10/direction
+echo 1 > /sys/class/gpio/gpio10/value
+echo high > /sys/class/gpio/gpio9/direction
+echo 1 > /sys/class/gpio/gpio9/value
+echo high > /sys/class/gpio/gpio8/direction
+echo 1 > /sys/class/gpio/gpio8/value
+echo high > /sys/class/gpio/gpio76/direction
+echo 1 > /sys/class/gpio/gpio76/value
+echo high > /sys/class/gpio/gpio74/direction
+echo 1 > /sys/class/gpio/gpio74/value
+echo high > /sys/class/gpio/gpio72/direction
+echo 1 > /sys/class/gpio/gpio72/value

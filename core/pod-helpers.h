@@ -33,3 +33,8 @@ bool primaryBrakesEngaged(pod_state_t *state);
  * Determine if the pod is stopped
  */
 bool podIsStopped(pod_state_t *state);
+
+/**
+ * Count the number of bits set in a 64-Bit integer
+ */
+int pop_cnt_64(uint64_t i);

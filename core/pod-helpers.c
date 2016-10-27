@@ -60,3 +60,12 @@ bool podIsStopped(pod_state_t *state) {
          within(-V_ERR_Y, getPodField_f(&(state->velocity_y)), V_ERR_Y) &&
          within(-V_ERR_Z, getPodField_f(&(state->velocity_z)), V_ERR_Z);
 }
+
+// A Pop Count counts the number of bits set in a 64 bit integer
+// http://www.playingwithpointers.com/swar.html
+int pop_cnt_64(uint64_t i) {
+  i = i - ((i >> 1) & 0x5555555555555555);
+  i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
+  return (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
+          0x0101010101010101) >> 56;
+}

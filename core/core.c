@@ -33,8 +33,6 @@ void bootChecks(pod_state_t *state) {
   if (getPodField(&(state->ready)) == 1) {
     // TODO: Other Pre-flight Checks that are not Human checked
     setPodMode(Ready, "Pod's Ready bit has been set");
-  } else {
-    info("Pod state is Boot, waiting for operator...");
   }
 }
 
@@ -159,6 +157,8 @@ int setSkates(int no, int val, bool override) {
   }
 
   state->tmp_skates = val;
+
+  bbb_setGpioValue(state->skate_solonoid_pins[no].gpio, 0);
   return 0;
 }
 
@@ -172,6 +172,9 @@ int setBrakes(int no, int val, bool override) {
   }
 
   state->tmp_brakes = val;
+
+  bbb_setGpioValue(state->ebrake_solonoid_pins[no].gpio, val);
+
   return 0;
 }
 
@@ -186,6 +189,9 @@ int setEBrakes(int no, int val, bool override) {
   }
 
   state->tmp_ebrakes = val;
+
+  bbb_setGpioValue(state->ebrake_solonoid_pins[no].gpio, val);
+
   return 0;
 }
 
@@ -216,7 +222,7 @@ void adjustBrakes(pod_state_t *state) {
       }
     } else {
       error("==== Emergency Emergency Emergency ====");
-      error("State is Emergency but not applying any brakes because accel x is > 0.0");
+      error("State is Emergency but not applying any brakes because accel x is > " __XSTR__(A_ERR_X));
       error("==== Emergency Emergency Emergency ====");
     }
     break;
@@ -254,26 +260,56 @@ void adjustSkates(pod_state_t *state) {
  * The Core Run Loop
  */
 void *coreMain(void *arg) {
+  debug("Core OpenLoop controller starting up");
 
+  printf(BANNER);
   // TODO: Implement pinReset();
 
-  imuConnect();
+  printf("Connecting IMU");
+
+#ifdef HAS_IMU
+  if (imuConnect(IMU_DEVICE) < 0) {
+    fatal("IMU connection failed");
+    pod_exit(1);
+  }
+#endif
+
   pod_state_t *state = getPodState();
 
   pod_mode_t mode;
 
+  uint64_t imu_errors = 0;
+  uint64_t iteration = 0;
+  uint64_t last_tick_time = 0, last_tick_iteration = 0, iteration_start = 0;
   while ((mode = getPodMode()) != Shutdown) {
+    bool one_sec_tick = false;
+
+    iteration_start = getTime();
+    if (iteration_start - last_tick_time > USEC_PER_SEC) {
+      one_sec_tick = true;
+    }
+
     // --------------------------------------------
     // SECTION: Read new information from sensors
     // --------------------------------------------
     if (imuRead(state) < 0) {
-      DECLARE_EMERGENCY("IMU READ FAILED");
+      // Mark a bit in the imu_errors mask
+      imu_errors |= (0x1 << (iteration % 64));
+      // TODO: Drop this down to 5 or something
+      if (pop_cnt_64(imu_errors) >= 64) {
+        setPodMode(Emergency, "IMU READ FAILED");
+      }
+    } else {
+      // Clear a bit from the imu_errors mask
+      imu_errors &= ~(0x1 << (iteration % 64));
     }
+
     if (skateRead(state) < 0) {
-      DECLARE_EMERGENCY("SKATE READ FAILED");
+      setPodMode(Emergency, "SKATE READ FAILED");
     }
+
     if (lateralRead(state) < 0) {
-      DECLARE_EMERGENCY("LATERAL READ FAILED");
+      setPodMode(Emergency, "LATERAL READ FAILED");
     }
 
     // -------------------------------------------
@@ -324,13 +360,60 @@ void *coreMain(void *arg) {
     // -------------------------------------------
     // SECTION: Telemetry collection
     // -------------------------------------------
-    logDump(state);
-
+    // logDump(state);
+    if (one_sec_tick) {
+      if (getPodMode() == Boot) {
+        info("Pod state is Boot, waiting for operator...");
+      }
+      info("Core executing at %d iter/sec", (iteration -last_tick_iteration));
+    }
     // --------------------------------------------
     // Yield to other threads
     // --------------------------------------------
-    usleep(CORE_THREAD_SLEEP);
+    iteration++;
+    if (one_sec_tick) {
+      last_tick_time = iteration_start;
+      last_tick_iteration = iteration;
+    }
+    usleep(0);
   }
 
   return NULL;
+}
+
+int setupPins(pod_state_t * state) {
+
+  // Relay Board
+  int i;
+  for (i=0; i<N_WHEEL_SOLONOIDS; i++) {
+    if (bbb_enableGpio(state->wheel_solonoid_pins[i].gpio) < 0) {
+      error("Failed to enable GPIO %d", state->wheel_solonoid_pins[i].gpio);
+      pod_exit(1);
+    }
+    if (bbb_setGpioDirection(state->wheel_solonoid_pins[i].gpio, 1) < 0) {
+      error("Failed set direction GPIO %d", state->wheel_solonoid_pins[i].gpio);
+      pod_exit(1);
+  	}
+  }
+  for (i=0; i<N_EBRAKE_SOLONOIDS; i++) {
+    if (bbb_enableGpio(state->ebrake_solonoid_pins[i].gpio) < 0) {
+      error("Failed to enable GPIO %d", state->ebrake_solonoid_pins[i].gpio);
+      pod_exit(1);
+    }
+    if (bbb_setGpioDirection(state->ebrake_solonoid_pins[i].gpio, 1) < 0) {
+      error("Failed set direction GPIO %d", state->ebrake_solonoid_pins[i].gpio);
+      pod_exit(1);
+  	}
+  }
+  for (i=0; i<N_SKATE_SOLONOIDS; i++) {
+    if (bbb_enableGpio(state->skate_solonoid_pins[i].gpio) < 0) {
+      error("Failed to enable GPIO %d", state->skate_solonoid_pins[i].gpio);
+      pod_exit(1);
+    }
+    if (bbb_setGpioDirection(state->skate_solonoid_pins[i].gpio, 1) < 0) {
+      error("Failed set direction GPIO %d", state->skate_solonoid_pins[i].gpio);
+      pod_exit(1);
+  	}
+  }
+  return 0;
 }

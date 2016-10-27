@@ -172,18 +172,19 @@ int logSend(log_t *l) {
     return -1;
   }
 
-  char buf[MAX_PACKET_SIZE];
+  char msg[MAX_PACKET_SIZE];
+  int len;
 
   switch (l->type) {
   case Message:
-    snprintf(&buf[0], MAX_PACKET_SIZE, "POD1%s", l->v.message);
+    len = snprintf(&msg[0], MAX_PACKET_SIZE, "POD1%s", l->v.message);
     break;
   case Telemetry_float:
-    snprintf(&buf[0], MAX_PACKET_SIZE, "POD2%s %f\n", l->v.float_data.name,
+    len = snprintf(&msg[0], MAX_PACKET_SIZE, "POD2%s %f\n", l->v.float_data.name,
              l->v.float_data.value);
     break;
   case Telemetry_int32:
-    snprintf(&buf[0], MAX_PACKET_SIZE, "POD2%s %d\n", l->v.int32_data.name,
+    len = snprintf(&msg[0], MAX_PACKET_SIZE, "POD2%s %d\n", l->v.int32_data.name,
              l->v.int32_data.value);
     break;
   default:
@@ -191,16 +192,16 @@ int logSend(log_t *l) {
     return -1;
   }
 
-  // TODO: buf is always a string, should be named as such
-  fprintf(stderr, "[STDERR] Logging %s", buf);
+  assert(len >= 0);
+
   /* send the message line to the server */
-  int n = write(logging_socket, buf, strlen(buf));
+  int n = write(logging_socket, msg, len);
   if (n <= 0) {
     fprintf(stderr, "ERROR writing to socket\n");
     return -1;
   }
   /* print the server's reply */
-  bzero(buf, MAX_PACKET_SIZE);
+  bzero(msg, MAX_PACKET_SIZE);
 
   return 0;
 }
@@ -226,7 +227,7 @@ int logTelemetry(char *name, int32_t i) {
   return logEnqueue(&l);
 }
 
-int podLog(char *fmt, ...) {
+int podLog(int lvl, char *fmt, ...) {
   va_list arg;
   log_t l = {.type = Message, .v = {{0}}};
 
@@ -253,7 +254,11 @@ int podLog(char *fmt, ...) {
     fsync(fileno(log_file));
   }
 
-  return logEnqueue(&l);
+  if (lvl >= MIN_NET_LOG_LVL) {
+    return logEnqueue(&l);
+  } else {
+    return 0;
+  }
 }
 
 void logDump(pod_state_t *state) {
@@ -291,6 +296,7 @@ void logDump(pod_state_t *state) {
 
   logTelemetry("skates", state->tmp_skates);
   logTelemetry("brakes", state->tmp_brakes);
+  logTelemetry("imu_temp", state->imu[state->imu_i].temperature);
 }
 
 void *loggingMain(void *arg) {

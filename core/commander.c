@@ -270,6 +270,7 @@ int commandServer() {
   fd_set active_fd_set, read_fd_set;
 
   int cmdbufferc = 0;
+
   note("=== Waiting for first commander connection ===", CMD_SVR_PORT);
 
   while (1) {
