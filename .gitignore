@@ -3,3 +3,5 @@ core/core
 *.o
 *.dSYM
 *.log
+core/imu.c
+core/imu_tester.c
