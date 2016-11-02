@@ -156,9 +156,11 @@ int setSkates(int no, int val, bool override) {
     return -1;
   }
 
-  state->tmp_skates = val;
+  if (state->tmp_skates != val) {
+    state->tmp_skates = val;
 
-  bbb_setGpioValue(state->skate_solonoid_pins[no].gpio, 0);
+    bbb_setGpioValue(state->skate_solonoid_pins[no].gpio, 0);
+  }
   return 0;
 }
 
@@ -171,10 +173,11 @@ int setBrakes(int no, int val, bool override) {
     return -1;
   }
 
-  state->tmp_brakes = val;
+  if (state->tmp_brakes != val) {
+    state->tmp_brakes = val;
 
-  bbb_setGpioValue(state->ebrake_solonoid_pins[no].gpio, val);
-
+    bbb_setGpioValue(state->ebrake_solonoid_pins[no].gpio, !val);
+  }
   return 0;
 }
 
@@ -188,10 +191,11 @@ int setEBrakes(int no, int val, bool override) {
     return -1;
   }
 
-  state->tmp_ebrakes = val;
-
-  bbb_setGpioValue(state->ebrake_solonoid_pins[no].gpio, val);
-
+  if (state->tmp_ebrakes != val) {
+    state->tmp_ebrakes = val;
+    // Gpio Value for Relay must be inversed
+    bbb_setGpioValue(state->ebrake_solonoid_pins[no].gpio, !val);
+  }
   return 0;
 }
 
@@ -278,7 +282,7 @@ void *coreMain(void *arg) {
 
   pod_mode_t mode;
 
-  uint64_t imu_errors = 0;
+  // uint64_t imu_errors = 0;
   uint64_t iteration = 0;
   uint64_t last_tick_time = 0, last_tick_iteration = 0, iteration_start = 0;
   while ((mode = getPodMode()) != Shutdown) {
@@ -292,17 +296,17 @@ void *coreMain(void *arg) {
     // --------------------------------------------
     // SECTION: Read new information from sensors
     // --------------------------------------------
-    if (imuRead(state) < 0) {
-      // Mark a bit in the imu_errors mask
-      imu_errors |= (0x1 << (iteration % 64));
-      // TODO: Drop this down to 5 or something
-      if (pop_cnt_64(imu_errors) >= 64) {
-        setPodMode(Emergency, "IMU READ FAILED");
-      }
-    } else {
-      // Clear a bit from the imu_errors mask
-      imu_errors &= ~(0x1 << (iteration % 64));
-    }
+    // if (imuRead(state) < 0) {
+    //   // Mark a bit in the imu_errors mask
+    //   imu_errors |= (0x1 << (iteration % 64));
+    //   // TODO: Drop this down to 5 or something
+    //   if (pop_cnt_64(imu_errors) >= 64) {
+    //     setPodMode(Emergency, "IMU READ FAILED");
+    //   }
+    // } else {
+    //   // Clear a bit from the imu_errors mask
+    //   imu_errors &= ~(0x1 << (iteration % 64));
+    // }
 
     if (skateRead(state) < 0) {
       setPodMode(Emergency, "SKATE READ FAILED");
@@ -365,7 +369,7 @@ void *coreMain(void *arg) {
       if (getPodMode() == Boot) {
         info("Pod state is Boot, waiting for operator...");
       }
-      info("Core executing at %d iter/sec", (iteration -last_tick_iteration));
+      info("Core executing at %llu iter/sec", (iteration -last_tick_iteration));
     }
     // --------------------------------------------
     // Yield to other threads

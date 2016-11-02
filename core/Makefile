@@ -12,7 +12,7 @@ DEPS = bbb.c core.c imu.c braking.c lateral.c logging.c skates.c pod.c pod-helpe
 SOURCES= main.c
 EXECUTABLE = core
 CFLAGS += -std=gnu99 -DTESTING # -DHAS_IMU
-LDFLAGS += -pthread
+LDFLAGS +=  -lz -pthread
 
 all: $(EXECUTABLE)
 

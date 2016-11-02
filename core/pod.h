@@ -41,18 +41,18 @@ typedef struct pod_value {
     int32_t int32;
     float fl;
   } value;
-  pthread_rwlock_t lock;
+  pthread_mutex_t lock;
 } pod_value_t;
 
 #define POD_VALUE_INITIALIZER_FL                                               \
   {                                                                            \
     { .fl = 0.0 }                                                              \
-    , PTHREAD_RWLOCK_INITIALIZER                                               \
+    , PTHREAD_MUTEX_INITIALIZER                                               \
   }
 #define POD_VALUE_INITIALIZER_INT32                                            \
   {                                                                            \
     { .int32 = 0 }                                                             \
-    , PTHREAD_RWLOCK_INITIALIZER                                               \
+    , PTHREAD_MUTEX_INITIALIZER                                               \
   }
 
 typedef struct {
@@ -154,7 +154,7 @@ typedef struct pod_state {
 
   // Current Overall Pod Mode (Goal of the System)
   pod_mode_t mode;
-  pthread_rwlock_t mode_mutex;
+  pthread_mutex_t mode_mutex;
 
   // Holds the pod in a boot state until set to 1 by an operator
   pod_value_t ready;
@@ -171,7 +171,7 @@ typedef struct pod_state {
 
   uint64_t start;
   uint64_t overrides;
-  pthread_rwlock_t overrides_mutex;
+  pthread_mutex_t overrides_mutex;
 
   bool initialized;
 } pod_state_t;

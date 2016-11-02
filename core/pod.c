@@ -49,7 +49,7 @@ pod_state_t __state = {
     .skate_rear_left_z = POD_VALUE_INITIALIZER_INT32,
     .skate_rear_right_z = POD_VALUE_INITIALIZER_INT32,
     .overrides = 0ULL,
-    .overrides_mutex = PTHREAD_RWLOCK_INITIALIZER
+    .overrides_mutex = PTHREAD_MUTEX_INITIALIZER
 };
 
 /**
@@ -58,13 +58,13 @@ pod_state_t __state = {
 void setManual(uint64_t surfaces, bool override) {
   pod_state_t * state = getPodState();
   if (override) {
-    pthread_rwlock_wrlock(&(state->overrides_mutex));
+    pthread_mutex_lock(&(state->overrides_mutex));
     state->overrides |= surfaces;
-    pthread_rwlock_unlock(&(state->overrides_mutex));
+    pthread_mutex_unlock(&(state->overrides_mutex));
   } else {
-    pthread_rwlock_wrlock(&(state->overrides_mutex));
+    pthread_mutex_lock(&(state->overrides_mutex));
     state->overrides &= ~surfaces;
-    pthread_rwlock_unlock(&(state->overrides_mutex));
+    pthread_mutex_unlock(&(state->overrides_mutex));
   }
 }
 
@@ -74,9 +74,9 @@ void setManual(uint64_t surfaces, bool override) {
 bool isManual(uint64_t surface) {
   bool manual = false;
   pod_state_t * state = getPodState();
-  pthread_rwlock_rdlock(&(state->overrides_mutex));
+  pthread_mutex_lock(&(state->overrides_mutex));
   manual = (bool) ((state->overrides & surface) != 0);
-  pthread_rwlock_unlock(&(state->overrides_mutex));
+  pthread_mutex_unlock(&(state->overrides_mutex));
   return manual;
 }
 /**
@@ -117,29 +117,29 @@ int initializePodState(void) {
   pod_state_t *state = getPodState();
   debug("initializing State at %p", state);
 
-  pthread_rwlock_init(&(state->mode_mutex), NULL);
+  pthread_mutex_init(&(state->mode_mutex), NULL);
 
   int i;
   char *skate_pins[N_SKATE_SOLONOIDS] = SKATE_SOLONOID_PINS;
   for (i = 0; i < N_SKATE_SOLONOIDS; i++) {
-    pthread_rwlock_init(&(state->skate_solonoids[i].lock), NULL);
-    pthread_rwlock_init(&(state->skate_thermocouples[i].lock), NULL);
+    pthread_mutex_init(&(state->skate_solonoids[i].lock), NULL);
+    pthread_mutex_init(&(state->skate_thermocouples[i].lock), NULL);
     state->skate_solonoid_pins[i].gpio = bbb_getGpio(bbb_getIndexByStr(skate_pins[i]));
   }
 
   char *ebrake_pins[N_EBRAKE_SOLONOIDS] = EBRAKE_SOLONOID_PINS;
   for (i = 0; i < N_EBRAKE_SOLONOIDS; i++) {
-    pthread_rwlock_init(&(state->ebrake_solonoids[i].lock), NULL);
-    pthread_rwlock_init(&(state->ebrake_pressures[i].lock), NULL);
-    pthread_rwlock_init(&(state->ebrake_thermocouples[i].lock), NULL);
+    pthread_mutex_init(&(state->ebrake_solonoids[i].lock), NULL);
+    pthread_mutex_init(&(state->ebrake_pressures[i].lock), NULL);
+    pthread_mutex_init(&(state->ebrake_thermocouples[i].lock), NULL);
     state->ebrake_solonoid_pins[i].gpio = bbb_getGpio(bbb_getIndexByStr(ebrake_pins[i]));
   }
 
   char *wheel_pins[N_WHEEL_SOLONOIDS] = WHEEL_SOLONOID_PINS;
   for (i = 0; i < N_WHEEL_SOLONOIDS; i++) {
-    pthread_rwlock_init(&(state->wheel_solonoids[i].lock), NULL);
-    pthread_rwlock_init(&(state->wheel_pressures[i].lock), NULL);
-    pthread_rwlock_init(&(state->wheel_thermocouples[i].lock), NULL);
+    pthread_mutex_init(&(state->wheel_solonoids[i].lock), NULL);
+    pthread_mutex_init(&(state->wheel_pressures[i].lock), NULL);
+    pthread_mutex_init(&(state->wheel_thermocouples[i].lock), NULL);
     state->wheel_solonoid_pins[i].gpio = bbb_getGpio(bbb_getIndexByStr(wheel_pins[i]));
   }
 
@@ -164,11 +164,11 @@ pod_state_t *getPodState(void) {
 }
 
 pod_mode_t getPodMode(void) {
-  pthread_rwlock_rdlock(&(getPodState()->mode_mutex));
+  pthread_mutex_lock(&(getPodState()->mode_mutex));
 
   pod_mode_t mode = getPodState()->mode;
 
-  pthread_rwlock_unlock(&(getPodState()->mode_mutex));
+  pthread_mutex_unlock(&(getPodState()->mode_mutex));
 
   return mode;
 }
@@ -191,9 +191,9 @@ int setPodMode(pod_mode_t new_mode, char *reason, ...) {
        pod_mode_names[new_mode], msg);
 
   if (validPodMode(old_mode, new_mode)) {
-    pthread_rwlock_wrlock(&(state->mode_mutex));
+    pthread_mutex_lock(&(state->mode_mutex));
     getPodState()->mode = new_mode;
-    pthread_rwlock_unlock(&(state->mode_mutex));
+    pthread_mutex_unlock(&(state->mode_mutex));
     warn("Request to set mode from %s to %s: approved",
          pod_mode_names[old_mode], pod_mode_names[new_mode]);
     return 0;
@@ -214,29 +214,29 @@ uint64_t getTime() {
 }
 
 int32_t getPodField(pod_value_t *pod_field) {
-  pthread_rwlock_rdlock(&(pod_field->lock));
+  pthread_mutex_lock(&(pod_field->lock));
   int32_t value = pod_field->value.int32;
-  pthread_rwlock_unlock(&(pod_field->lock));
+  pthread_mutex_unlock(&(pod_field->lock));
   return value;
 }
 
 float getPodField_f(pod_value_t *pod_field) {
-  pthread_rwlock_rdlock(&(pod_field->lock));
+  pthread_mutex_lock(&(pod_field->lock));
   float value = pod_field->value.fl;
-  pthread_rwlock_unlock(&(pod_field->lock));
+  pthread_mutex_unlock(&(pod_field->lock));
   return value;
 }
 
 void setPodField(pod_value_t *pod_field, int32_t newValue) {
-  pthread_rwlock_wrlock(&(pod_field->lock));
+  pthread_mutex_lock(&(pod_field->lock));
   pod_field->value.int32 = newValue;
-  pthread_rwlock_unlock(&(pod_field->lock));
+  pthread_mutex_unlock(&(pod_field->lock));
 }
 
 void setPodField_f(pod_value_t *pod_field, float newValue) {
-  pthread_rwlock_wrlock(&(pod_field->lock));
+  pthread_mutex_lock(&(pod_field->lock));
   pod_field->value.fl = newValue;
-  pthread_rwlock_unlock(&(pod_field->lock));
+  pthread_mutex_unlock(&(pod_field->lock));
 }
 
 /**

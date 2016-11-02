@@ -56,7 +56,7 @@
 #define PUSH_ACC 16
 #define TRACK_LENGTH 100 // Meters
 #define ACC_LENGTH 250
-#define POD_MASS 750 // Kg
+#define POD_MASS 800 // Kg
 #define SIM_TIME 65
 #define LOOP_DURATION 1000;
 
@@ -72,7 +72,7 @@
 #define POD_SIGPANIC SIGUSR2
 
 // IMU Device
-#ifdef __linux__
+#ifdef BBB
 #define IMU_DEVICE "/dev/ttyUSB0"
 #else
 #define IMU_DEVICE "/dev/cu.usbserial-A600DTJI"
