@@ -104,6 +104,35 @@ int ventCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
   }
 }
 
+int timeoutCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
+  if (argc != 1) {
+    return snprintf(outbuf, outbufc, "Usage: timeout <type> [<value>]");
+  }
+
+  pod_t *pod = get_pod();
+
+
+  if (argc != 1) {
+    return snprintf(outbuf, outbufc, "Usage: timeout <type> [<value>]");
+  }
+  if (strncmp(argv[1], "braking", strlen("braking")) == 0) {
+    if (argc == 3) {
+      int val = atoi(argv[2]);
+      pod->brake_timeout = val;
+    }
+    return snprintf(outbuf, outbufc, "Braking Timeout %d", pod->brake_timeout);
+
+
+  }
+  if (is_pod_stopped(pod)) {
+    return snprintf(outbuf, outbufc, "Venting Started");
+  } else {
+    return snprintf(outbuf, outbufc, "Pod Not Determined to be Stopped, override solenoid to vent");
+  }
+}
+
+
+
 int statusCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
   pod_t *pod = get_pod();
 
@@ -200,6 +229,17 @@ int killCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
   return -1;
 }
 
+int manualCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
+  if (argc != 2) {
+    return snprintf(outbuf, outbufc, "Usage: manual <1|0>");
+  }
+  bool enabled = (atoi(argv[1]) == 1);
+
+  get_pod()->manual_mode = enabled;
+
+  return snprintf(outbuf, outbufc, "Manual Override set to %s", (enabled ? "ON" : "OFF"));
+}
+
 int pushCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
   pod_t *pod = get_pod();
 
@@ -218,6 +258,26 @@ int pushCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
   }
 }
 
+int batteryCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
+  pod_t *pod = get_pod();
+  if (argc == 2) {
+    if (strncmp(argv[1],"toggle", strlen("toggle")) == 0) {
+      int handle = i2c_open(I2CBUS, BATTERY_0_ADDRESS);
+      int result = toggle_pack(handle);
+      i2c_close(handle);
+
+      if (result == 0) {
+        return snprintf(outbuf, outbufc, "Pack toggled");
+      } else {
+        return snprintf(outbuf, outbufc, "Pack Failed to respond to command");
+      }
+    }
+  }
+}
+
+
+
+
 // You must keep this list in order from Longest String to Shortest,
 // Doesn't matter the order amongst names of equal length.
 // Has to deal with how commands are located, where "e" undercuts any command
@@ -225,7 +285,9 @@ int pushCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
 command_t commands[] = {{.name = "emergency", .func = emergencyCommand},
                         {.name = "calibrate", .func = calibrateCommand},
                         {.name = "override", .func = overrideCommand},
+                        {.name = "battery", .func = batteryCommand},
                         {.name = "status", .func = statusCommand},
+                        {.name = "manual", .func = manualCommand},
                         {.name = "offset", .func = offsetCommand},
                         {.name = "ready", .func = readyCommand},
                         {.name = "reset", .func = resetCommand},

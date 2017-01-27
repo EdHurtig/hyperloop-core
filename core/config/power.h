@@ -6,10 +6,10 @@
 // Power Board
 // --------------------------
 
-#define N_POWER_THERMO 4
-#define POWER_THERMO_MUX THERMO_MUX_1
+#define N_POWER_THERMO 3
+#define POWER_THERMO_MUX THERMO_MUX_0
 #define POWER_THERMO_INPUTS                                                    \
-  { 6, 7, 8, 9 }
+  { 10, 11, 12 }
 
 // --------------------------
 // Batteries
@@ -23,8 +23,8 @@
 // Frame Thermocouple
 // --------------------------
 #define N_FRAME_THERMO 1
-#define FRAME_THERMO_MUX THERMO_MUX_1
+#define FRAME_THERMO_MUX THERMO_MUX_0
 #define FRAME_THERMO_INPUTS                                                    \
-  { 10 }
+  { 13 }
 
 #endif

@@ -9,7 +9,7 @@ char *pod_mode_names[N_POD_STATES] = {
     "Vent",    "Retrieval", "Emergency", "Shutdown"};
 
 pod_t _pod = {
-    .mode = Boot,
+    .mode = Standby,
     .initialized = false,
     .start = 0ULL,
     .accel_x = POD_VALUE_INITIALIZER_FL,
@@ -33,6 +33,7 @@ pod_t _pod = {
     .imu = -1,
     .logging_socket = -1,
     .last_ping = 0,
+    .manual_mode = false,
     .relays = {&(_pod.skate_solonoids[0]), &(_pod.skate_solonoids[1]),
                &(_pod.skate_solonoids[2]), &(_pod.clamp_engage_solonoids[0]),
                &(_pod.clamp_release_solonoids[0]),
@@ -49,6 +50,13 @@ pod_t _pod = {
 
 uint64_t time_in_state(void) {
   return (get_time() - get_pod()->last_transition);
+}
+
+uint64_t time_since_launch(void) {
+  if (get_pod()->launch_time == 0) {
+    return 0;
+  }
+  return (get_time() - get_pod()->launch_time);
 }
 
 /**
@@ -175,9 +183,9 @@ int init_pod(void) {
       .sensor_id = id,
       .name = {0},
       .value = POD_VALUE_INITIALIZER_FL,
-      .cal_a = 0,
-      .cal_b = 1,
-      .cal_c = 0,
+      .cal_a = DISTANCE_CALIBRATION_A,
+      .cal_b = DISTANCE_CALIBRATION_B,
+      .cal_c = DISTANCE_CALIBRATION_C,
       .alpha = 1.0,
       .offset = 0.0,
       .mux = DISTANCE_MUX,
@@ -194,9 +202,9 @@ int init_pod(void) {
       .sensor_id = id,
       .name = {0},
       .value = POD_VALUE_INITIALIZER_FL,
-      .cal_a = 0,
-      .cal_b = 1,
-      .cal_c = 0,
+      .cal_a = DISTANCE_CALIBRATION_A,
+      .cal_b = DISTANCE_CALIBRATION_B,
+      .cal_c = DISTANCE_CALIBRATION_C,
       .alpha = 1.0,
       .offset = 0.0,
       .mux = DISTANCE_MUX,
@@ -213,9 +221,9 @@ int init_pod(void) {
       .sensor_id = id,
       .name = {0},
       .value = POD_VALUE_INITIALIZER_FL,
-      .cal_a = 0,
-      .cal_b = 1,
-      .cal_c = 0,
+      .cal_a = DISTANCE_CALIBRATION_A,
+      .cal_b = DISTANCE_CALIBRATION_B,
+      .cal_c = DISTANCE_CALIBRATION_C,
       .alpha = 1.0,
       .offset = 0.0,
       .mux = DISTANCE_MUX,
@@ -235,9 +243,9 @@ int init_pod(void) {
     .sensor_id = id,
     .name = {0},
     .value = POD_VALUE_INITIALIZER_FL,
-    .cal_a = 0,
-    .cal_b = 1,
-    .cal_c = 0,
+    .cal_a = HP_TRANSDUCER_CALIBRATION_A,
+    .cal_b = HP_TRANSDUCER_CALIBRATION_B,
+    .cal_c = HP_TRANSDUCER_CALIBRATION_C,
     .alpha = 1.0,
     .offset = 0.0,
     .mux = PRESSURE_MUX,
@@ -317,7 +325,7 @@ int init_pod(void) {
       .cal_a = FLOW_THERMO_CALIBRATION_A,
       .cal_b = FLOW_THERMO_CALIBRATION_B,
       .cal_c = FLOW_THERMO_CALIBRATION_C,
-      .alpha = 0.01,
+      .alpha = 0.1,
       .offset = 0.0,
       .mux = REG_THERMO_MUX,
       .input = reg_thermo[i]
@@ -337,7 +345,7 @@ int init_pod(void) {
       .cal_a = WHITE_THERMO_CALIBRATION_A,
       .cal_b = WHITE_THERMO_CALIBRATION_B,
       .cal_c = WHITE_THERMO_CALIBRATION_C,
-      .alpha = 0.01,
+      .alpha = 0.1,
       .offset = 0.0,
       .mux = REG_SURF_THERMO_MUX,
       .input = reg_surf_thermo[i]
@@ -357,7 +365,7 @@ int init_pod(void) {
       .cal_a = WHITE_THERMO_CALIBRATION_A,
       .cal_b = WHITE_THERMO_CALIBRATION_B,
       .cal_c = WHITE_THERMO_CALIBRATION_C,
-      .alpha = 0.01,
+      .alpha = 0.1,
       .offset = 0.0,
       .mux = POWER_THERMO_MUX,
       .input = power_thermo[i]
@@ -377,7 +385,7 @@ int init_pod(void) {
       .cal_a = WHITE_THERMO_CALIBRATION_A,
       .cal_b = WHITE_THERMO_CALIBRATION_B,
       .cal_c = WHITE_THERMO_CALIBRATION_C,
-      .alpha = 0.01,
+      .alpha = 0.1,
       .offset = 0.0,
       .mux = CLAMP_PAD_THERMO_MUX,
       .input = clamp_pad_thermo[i]

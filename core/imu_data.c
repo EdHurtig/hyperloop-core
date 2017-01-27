@@ -63,9 +63,10 @@ void add_imu_data(imu_datagram_t *data, pod_t *s) {
 
   last_imu_reading = new_imu_reading;
 
-  float x = data->x + get_value_f(&(s->imu_calibration_x)) + 5.0;
-  float y = data->y + get_value_f(&(s->imu_calibration_y));
-  float z = data->z + get_value_f(&(s->imu_calibration_z));
+  // Convert
+  float x = (data->x * 9.81) + get_value_f(&(s->imu_calibration_x));
+  float y = (data->y * 9.81) + get_value_f(&(s->imu_calibration_y));
+  float z = (data->z * 9.81) + get_value_f(&(s->imu_calibration_z));
 
   calcState(&(s->accel_x), &(s->velocity_x), &(s->position_x), x, dt);
   calcState(&(s->accel_y), &(s->velocity_y), &(s->position_y), y, dt);

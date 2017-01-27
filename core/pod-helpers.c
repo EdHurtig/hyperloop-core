@@ -20,16 +20,17 @@
  * Determine if emergency brakes are engaged
  */
 bool any_clamp_brakes(pod_t *pod) {
-  // TODO: no transducers on clamp lines
-  return pod->tmp_clamps;
+  return is_solenoid_open(&(pod->clamp_engage_solonoids[0])) ||
+         is_solenoid_open(&(pod->clamp_engage_solonoids[1]));
 }
 
 /**
  * Determine if emergency brakes are engaged
  */
 bool any_calipers(pod_t *pod) {
-  // TODO: no transducers on caliper lines
-  return pod->tmp_brakes;
+  return is_solenoid_open(&(pod->wheel_solonoids[0])) ||
+         is_solenoid_open(&(pod->wheel_solonoids[1])) ||
+         is_solenoid_open(&(pod->wheel_solonoids[2]));
 }
 
 float get_stopping_distance(pod_t *pod) {
@@ -54,11 +55,7 @@ float get_stopping_deccel(pod_t *pod) {
  */
 bool is_pod_stopped(pod_t *pod) {
   return within(-A_ERR_X, get_value_f(&(pod->accel_x)), A_ERR_X) &&
-         within(-A_ERR_Y, get_value_f(&(pod->accel_y)), A_ERR_Y) &&
-         within(-A_ERR_Z, get_value_f(&(pod->accel_z)), A_ERR_Z) &&
-         within(-V_ERR_X, get_value_f(&(pod->velocity_x)), V_ERR_X) &&
-         within(-V_ERR_Y, get_value_f(&(pod->velocity_y)), V_ERR_Y) &&
-         within(-V_ERR_Z, get_value_f(&(pod->velocity_z)), V_ERR_Z);
+         within(-V_ERR_X, get_value_f(&(pod->velocity_x)), V_ERR_X);
 }
 
 bool is_pod_vented(pod_t *pod) {
@@ -88,6 +85,10 @@ bool is_lp_vented(pod_t *pod) {
 }
 
 void setRelay(int pin, relay_state_t state) {
+
+  if (get_pod()->manual_mode == 1) {
+    return;
+  }
   switch (state) {
   case kRelayOn:
     setPinValue(pin, 1);
@@ -231,6 +232,9 @@ sensor_t * get_sensor_by_address(pod_t *pod, int mux, int input) {
 }
 
 bool setup_pin(int no) {
+  return false;
+  // TODO: Re-Enable
+
   // I am being incredibly verbose in my order of operations... can just be
   // a single if with some &&
   if (initPin(no) == 0) {

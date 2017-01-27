@@ -10,11 +10,7 @@
 #define TUBE_LENGTH 1600
 #define STOP_MARGIN 100
 #define START_BRAKING 1100
-
-#define WATCHDOG_TIMER 16 * USEC_PER_SEC
-
-
-
+#define BRAKING_TIMER 15.8 // 4.9 + 10.9
 /*
 
 Phase
@@ -39,7 +35,7 @@ Braking
 10.4
 */
 
-
+#define PUSHER_PLATE_PIN 48
 
 // --------------------------
 // Relay
@@ -51,11 +47,11 @@ Braking
 // --------------------------
 #define N_MUXES 7
 #define N_MUX_INPUTS 16
-#define THERMO_MUX_0 0
-#define THERMO_MUX_1 1
-#define PRESSURE_MUX 2
-#define DISTANCE_MUX 3
-#define PHOTO_MUX 4
-#define SPARE_MUX_0 5
-#define SPARE_MUX_1 6
+#define THERMO_MUX_0 5
+#define THERMO_MUX_1 THERMO_MUX_0
+#define PRESSURE_MUX 4
+#define DISTANCE_MUX 6
+#define PHOTO_MUX 1
+#define SPARE_MUX_0 2
+#define SPARE_MUX_1 3
 #endif

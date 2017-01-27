@@ -117,6 +117,7 @@ typedef struct {
   sensor_t temperature;
   sensor_t charge;
   sensor_t remaining_time;
+  bool enabled;
 } pod_battery_t;
 
 
@@ -221,7 +222,7 @@ typedef struct pod {
   uint64_t last_pusher_plate_low;
   bool pusher_plate_override;
 
-  uint64_t begin_time;
+  uint64_t launch_time;
 
   // Batteries
   pod_battery_t battery[N_BATTERIES];
@@ -269,10 +270,7 @@ typedef struct pod {
   enum pod_caution cautions;
   enum pod_warning warnings;
 
-  // TODO: Temporary
-  int tmp_skates;
-  int tmp_brakes;
-  int tmp_clamps;
+  int brake_timeout;
 
   bool calibrated;
 
@@ -281,7 +279,7 @@ typedef struct pod {
   uint64_t start;
   uint64_t overrides;
   pthread_rwlock_t overrides_mutex;
-
+  bool manual_mode;
   bool initialized;
 } pod_t;
 

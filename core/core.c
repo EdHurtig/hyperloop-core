@@ -27,10 +27,10 @@ int brakingRead(pod_t *pod);
 
 void common_checks(pod_t *pod) {
 
-  // Watchdog Timer
-  if (pod->begin_time > 0) {
+  // Timers
+  if (pod->launch_time > 0) {
     uint64_t now = get_time();
-    if (now - pod->begin_time >= WATCHDOG_TIMER) {
+    if (time_since_launch(pod) >= pod->brake_timeout) {
       if (!is_pod_stopped(pod)) {
         if (!(get_pod_mode() == Braking ||
               get_pod_mode() == Vent ||
@@ -54,15 +54,12 @@ bool core_pod_checklist(pod_t *pod) {
   // TODO: is_imu_ok()            // temp (-40°C to +75°C) VERIFIED
   // TODO: is_velocity_too_fast() // 95 m/s (roughly 215 mph) @akeating
 
-  // TODO: is_reg_temp_ok()       // 0 -> 50 @akeating
-  // TODO: is_clamp_temp_ok()    // 0 -> 100something @akeating
-  // TODO: is_battery_temp_ok()   // 0 -> 60something @james
-  // TODO: is_caliper_temp_ok()   // 0 -> 100something @akeating
-  // TODO: is_frame_temp_ok()     // 0 -> 40 C @edhurtig
+  // TODO: is_reg_temp_ok()       // -15 -> 100 @akeating
+  // TODO: is_clamp_temp_ok()     // -30 -> 450 something @akeating
+  // TODO: is_battery_temp_ok()   // -10 -> 55 something @james
 
-  // TODO: is_frame_pressure_ok() // 0 -> 20 PSIA VERIFIED
-  // TODO: is_hp_pressure_ok()    // 0 -> 1770 PSI... @akeating
-  // TODO: is_lp_pressure_ok()    // 0 -> 150 PSI... @akeating
+  // TODO: is_hp_pressure_ok()    // 0 -> 2000 PSIA... @akeating
+  // TODO: is_lp_pressure_ok()    // 0 -> 135 PSIA... @akeating
   int i;
   for (i = 0; i < N_LP_FILL_SOLENOIDS; i++) {
     if (is_solenoid_open(&(pod->lp_fill_valve[i]))) {
@@ -106,7 +103,7 @@ bool start_lp_fill() {
  */
 bool start_hp_fill() {
   if (pod_hp_safe_checklist(get_pod())) {
-    return set_pod_mode(HPFill, "Control Point Initiated LP Fill");
+    return set_pod_mode(HPFill, "Control Point Initiated HP Fill");
   }
   return false;
 }
@@ -153,9 +150,6 @@ void load_state_checks(pod_t *pod) {
 }
 
 void standby_state_checks(pod_t *pod) {
-  if (!core_pod_checklist(pod)) {
-    set_pod_mode(Emergency, "Core Checklist Failed");
-  }
   if (get_value(&(pod->pusher_plate)) == 1) {
     set_pod_mode(Load, "Moving/Loading");
   }
@@ -176,7 +170,9 @@ void armed_state_checks(pod_t *pod) {
  */
 void emergency_state_checks(pod_t *pod) {
   if (is_pod_stopped(pod) && any_clamp_brakes(pod) && any_calipers(pod)) {
-    set_pod_mode(Vent, "Pod has been determined to be ready for venting");
+    if (time_in_state() > 10 * USEC_PER_SEC) {
+      set_pod_mode(Vent, "Pod has been determined to be safe");
+    }
   }
 }
 
@@ -192,8 +188,8 @@ void pushing_state_checks(pod_t *pod) {
     set_pod_mode(Braking, "Pod has entered braking range of travel");
   }
 
-  if (pod->begin_time == 0) {
-    pod->begin_time = get_time();
+  if (pod->launch_time == 0) {
+    pod->launch_time = get_time();
   }
 }
 
@@ -277,13 +273,6 @@ void lateral_sensor_checks(pod_t *pod) {
 int set_skate_target(int no, solenoid_state_t val, bool override) {
   // TODO: Implement Me
   pod_t *pod = get_pod();
-  if (is_surface_overriden(SKATE_OVERRIDE_ALL) && !override &&
-      pod->tmp_skates != val) {
-    warn("Skates are in override mode!");
-    return -1;
-  }
-
-  pod->tmp_skates = val;
 
   set_solenoid(&(pod->skate_solonoids[no]), val);
   return 0;
@@ -292,15 +281,8 @@ int set_skate_target(int no, solenoid_state_t val, bool override) {
 int ensure_caliper_brakes(int no, solenoid_state_t val, bool override) {
   // TODO: Implement Me
   pod_t *pod = get_pod();
-  uint64_t skate_override[] = SKATE_OVERRIDE_LIST;
-  if (is_surface_overriden(skate_override[no]) && !override &&
-      pod->tmp_brakes != val) {
-    warn("Skates are in override mode!");
-    return -1;
-  }
 
   set_solenoid(&(pod->wheel_solonoids[no]), val);
-  pod->tmp_brakes = val;
   return 0;
 }
 
@@ -331,24 +313,30 @@ int ensure_clamp_brakes(int no, clamp_brake_state_t val, bool override) {
     DECLARE_EMERGENCY("Invalid clamp_brake_state_t");
   }
 
-  // TODO: Remove
-  pod->tmp_clamps = val;
+
   return 0;
 }
 
 void adjust_brakes(pod_t *pod) {
   int i;
   switch (get_pod_mode()) {
-  case POST:
-  case Boot:
-  case LPFill:
-  case HPFill:
-  case Load:
-  case Standby:
-  case Armed:
-  case Vent:
-  case Retrieval:
-  case Emergency:
+    case Standby:
+      // pass
+      break;
+    case POST:
+    case Boot:
+    case LPFill:
+    case HPFill:
+    case Load:
+    case Armed:
+    case Vent:
+    case Retrieval:
+    case Emergency:
+    if (time_in_state() < 10*USEC_PER_SEC) {
+      for (i = 0; i < N_SKATE_SOLONOIDS; i++) {
+        ensure_clamp_brakes(i, kClampBrakeEngaged, false);
+      }
+    }
     for (i = 0; i < N_SKATE_SOLONOIDS; i++) {
       set_skate_target(i, kSolenoidClosed, false);
     }
@@ -371,12 +359,14 @@ void adjust_skates(pod_t *pod) {
   // switch over them
   int i;
   switch (get_pod_mode()) {
+  case Standby:
+    // pass
+    break;
   case POST:
   case Boot:
   case LPFill:
   case HPFill:
   case Load:
-  case Standby:
   case Armed:
   case Vent:
   case Retrieval:
@@ -400,12 +390,15 @@ void adjust_skates(pod_t *pod) {
 
 void adjust_vent(pod_t *pod) {
   switch (get_pod_mode()) {
+  case Standby:
+    // pass
+    break;
   case POST:
   case Boot:
   case LPFill:
   case HPFill:
   case Load:
-  case Standby:
+
   case Armed:
   case Pushing:
   case Coasting:
@@ -479,6 +472,7 @@ void *core_main(void *arg) {
       imu_score -= IMU_SCORE_STEP_DOWN;
     }
 
+    read_batteries(pod);
 
     add_imu_data(&imu_data, pod);
     // ADC_READ
@@ -497,9 +491,11 @@ void *core_main(void *arg) {
 
     // Pusher Plate D-Bounce
     if (pod->pusher_plate_override != 1) {
+      int value = getPinValue(PUSHER_PLATE_PIN);
+      set_value(&(pod->pusher_plate_raw), 1);
+
       if (get_value(&(pod->pusher_plate_raw)) == 1) {
         if (get_time() - pod->last_pusher_plate_low > 0.1 * USEC_PER_SEC) {
-          set_value(&(pod->pusher_plate_raw), 1);
         }
       } else {
         pod->last_pusher_plate_low = get_time();
@@ -597,7 +593,7 @@ void *core_main(void *arg) {
     // --------------------------------------------
     usleep(CORE_THREAD_SLEEP);
 
-    usleep(0.1 * USEC_PER_SEC);
+    usleep(1 * USEC_PER_SEC);
     // -------------------------------------------------------
     // Compute how long it is taking for the main loop to run
     // -------------------------------------------------------

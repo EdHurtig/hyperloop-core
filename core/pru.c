@@ -105,11 +105,12 @@ int pru_read(pod_t * pod) {
     for (mux=0;mux<7;mux++) {
       sensor_t *s = get_sensor_by_address(pod, mux, input);
       if (s != NULL) {
+        printf("\n%s mux:%d input:%d\n", s->name, mux, input);
         uint32_t val = pru_get_int(pru_shared_mem_int[OFFSET_SHAREDRAM + 3 + mux]);
 
         printf(" %4d", val);
 
-        update_sensor(s, val);
+        update_sensor(s, (float)val);
       } else {
         printf("     ");
       }

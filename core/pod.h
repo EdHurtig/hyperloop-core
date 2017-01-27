@@ -30,6 +30,7 @@
 #include "pod/log.h"
 #include "pod/emergency.h"
 #include "core.h"
+#include "batteries.h"
 #include "ring_buffer.h"
 /**
  * Get the current time of the pod in microseconds
@@ -65,4 +66,6 @@ int self_tests(pod_t *pod);
 
 void add_imu_data(imu_datagram_t *data, pod_t *s);
 void setup_pins(pod_t *state);
+
+void read_batteries(pod_t *pod);
 #endif

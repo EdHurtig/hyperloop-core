@@ -28,9 +28,9 @@ uint64_t get_time() {
 void pod_calibrate() {
   pod_t *pod = get_pod();
 
-  set_value_f(&(pod->imu_calibration_x), get_value_f(&(pod->accel_x)));
-  set_value_f(&(pod->imu_calibration_y), get_value_f(&(pod->accel_y)));
-  set_value_f(&(pod->imu_calibration_z), get_value_f(&(pod->accel_z)));
+  set_value_f(&(pod->imu_calibration_x), -get_value_f(&(pod->accel_x)) + get_value_f(&(pod->imu_calibration_x)));
+  set_value_f(&(pod->imu_calibration_y), -get_value_f(&(pod->accel_y)) + get_value_f(&(pod->imu_calibration_y)));
+  set_value_f(&(pod->imu_calibration_z), -get_value_f(&(pod->accel_z)) + get_value_f(&(pod->imu_calibration_z)));
 }
 
 void pod_reset() {

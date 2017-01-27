@@ -1,6 +1,10 @@
 #ifndef _OPENLOOP_POD_CONFIG_PHOTO_
 #define _OPENLOOP_POD_CONFIG_PHOTO_
 
+#define DISTANCE_CALIBRATION_A -30.136
+#define DISTANCE_CALIBRATION_B 183.0
+#define DISTANCE_CALIBRATION_C -259.62
+
 // --------------------------
 // Vertical
 // --------------------------

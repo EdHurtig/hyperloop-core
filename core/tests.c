@@ -37,12 +37,15 @@ int relay_walk() {
     info(" > gpio: %d", s->gpio);
     info(" > value: %d", s->value);
     info(" > name: %s", s->name);
-    if (is_solenoid_open(s)) {
-      close_solenoid(s);
-      usleep(500000);
-    } else {
-      open_solenoid(s);
-      usleep(500000);
+    int j;
+    for (j=0;j<10;j++){
+      if (is_solenoid_open(s)) {
+        close_solenoid(s);
+        sleep(1);
+      } else {
+        open_solenoid(s);
+        sleep(1);
+      }
     }
 
     info("Closing Solenoid on relay %d", i);
@@ -74,9 +77,9 @@ int self_tests(pod_t *state) {
     }
   }
 
-  if (sensor_walker() < 0) {
-    error("Relay Walk Test Failed");
-    exit(1);
-  }
+  // if (sensor_walker() < 0) {
+  //   error("Relay Walk Test Failed");
+  //   exit(1);
+  // }
   return 0;
 }

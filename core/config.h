@@ -40,9 +40,9 @@
 #define A_ERR_X 0.02
 #define A_ERR_Y 0.02
 #define A_ERR_Z 0.02
-#define V_ERR_X 0.1
-#define V_ERR_Y 0.1
-#define V_ERR_Z 0.1
+#define V_ERR_X 2
+#define V_ERR_Y 2
+#define V_ERR_Z 2
 
 #define HEARTBEAT_TIMEOUT 1000 // (ms)
 // Signals
@@ -56,7 +56,7 @@
 // filter for the IMU input.
 // The formula used is:
 //   (new_accel = (1.0-IMU_EMA_ALPHA)*old_accel + IMU_EMA_ALPHA*accel_reading)
-#define IMU_EMA_ALPHA 0.01
+#define IMU_EMA_ALPHA 0.1
 
 // -------------------------
 // Subsystem Identifiers

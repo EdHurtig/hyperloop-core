@@ -117,6 +117,7 @@ telemetry_packet_t make_telemetry(pod_t *pod) {
     .reg_thermo = {0},
     .reg_surf_thermo = {0},
     .power_thermo = {0},
+    .clamp_thermo = {0},
     .frame_thermo = 0.0,
 
     // batteries
@@ -180,6 +181,10 @@ telemetry_packet_t make_telemetry(pod_t *pod) {
     packet.power_thermo[i] = get_sensor(&(pod->power_thermo[i]));
   }
 
+  for (i = 0; i < N_CLAMP_PAD_THERMO; i++) {
+    packet.clamp_thermo[i] = get_sensor(&(pod->clamp_thermo[i]));
+  }
+
   for (i = 0; i < N_BATTERIES; i++) {
     packet.voltages[i] = get_sensor(&(pod->battery[i].voltage));
   }
@@ -206,8 +211,9 @@ int status_dump(pod_t *pod, char *buf, int len) {
            get_value_f(&(pod->velocity_y)), get_value_f(&(pod->velocity_z)), get_value_f(&(pod->position_x)),
            get_value_f(&(pod->position_y)), get_value_f(&(pod->position_z)));
 
-   c += snprintf(&buf[c], len - c, "Pusher Plate: \t%s\n",
-                 (get_value(&(pod->pusher_plate)) ? "ACTIVE" : "INACTIVE"));
+   c += snprintf(&buf[c], len - c, "Cal X: \t%f\n", get_value_f(&(pod->imu_calibration_x)));
+   c += snprintf(&buf[c], len - c, "Cal Y: \t%f\n", get_value_f(&(pod->imu_calibration_y)));
+   c += snprintf(&buf[c], len - c, "Cal Z: \t%f\n", get_value_f(&(pod->imu_calibration_z)));
 
    for (i = 0; i < N_SKATE_SOLONOIDS; i++) {
      c += snprintf(
@@ -255,6 +261,17 @@ int status_dump(pod_t *pod, char *buf, int len) {
      }
    }
 
+   // Batteries
+   c += snprintf(&buf[c], len - c, "Voltage: \t%f\n", get_sensor(&(pod->battery[0].voltage)));
+   c += snprintf(&buf[c], len - c, "Current: \t%f\n", get_sensor(&(pod->battery[0].current)));
+   c += snprintf(&buf[c], len - c, "Enabled: \t%d\n", pod->battery[0].enabled);
+
+   c += snprintf(&buf[c], len - c, "is_hp_vented: \t%d\n", is_hp_vented(pod));
+   c += snprintf(&buf[c], len - c, "is_pod_stopped: \t%d\n", is_pod_stopped(pod));
+   c += snprintf(&buf[c], len - c, "core_pod_checklist: \t%d\n", core_pod_checklist(pod));
+
+   c += snprintf(&buf[c], len - c, "pod_safe_checklist: \t%d\n", pod_safe_checklist(pod));
+   c += snprintf(&buf[c], len - c, "pod_hp_safe_checklist: \t%d\n", pod_hp_safe_checklist(pod));
    return c;
 }
 
@@ -279,10 +296,11 @@ void log_dump(pod_t *pod) {
   }
 
   if (get_time() - last_packet > PACKET_INTERVAL) {
-    debug("Dumping telemetry packet");
+    debug("Dumping telemetry packet %lluus", get_time() - last_packet);
     telemetry_packet_t packet = make_telemetry(pod);
     log_t l = {.type = Packet, .v = {.packet = packet}};
     log_enqueue(&l);
+    last_packet = get_time();
   }
 }
 

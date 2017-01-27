@@ -57,6 +57,7 @@ typedef struct telemetry_packet {
   float reg_thermo[N_REG_THERMO];                  // 4
   float reg_surf_thermo[N_REG_SURF_THERMO];        // 4
   float power_thermo[N_POWER_THERMO];              // 4
+  float clamp_thermo[N_CLAMP_PAD_THERMO];          // 2
   float frame_thermo;                              // 1
 
   // Batteries
