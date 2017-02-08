@@ -1,33 +1,29 @@
 #include "pod.h"
 #include "i2cfunc.h"
 
-void read_batteries(pod_t *pod) {
-
+void read_batteries(pod_t *pod, int bus) {
   int handle;
-  handle = i2c_open(I2CBUS, 0x0b);
+  handle = i2c_open(bus, 0x0b);
+
+  if (handle < 0) {
+    debug("Failed to connect to bus %d", bus);
+    return;
+  }
 
   int voltage = get_pack_voltage(handle);
   if (voltage >= 0) {
-    update_sensor(&(pod->battery[0].voltage), (float)voltage);
+    update_sensor(&(pod->battery[bus].voltage), (float)voltage);
   }
 
   int current = get_pack_current(handle);
   if (current >= 0) {
-    update_sensor(&(pod->battery[0].current), (float)current);
-  }
-
-  int state = is_pack_enabled(handle);
-  if (state > 0) {
-    pod->battery[0].enabled = true;
-  } else {
-    pod->battery[0].enabled = false;
+    update_sensor(&(pod->battery[bus].current), (float)current);
   }
 
   i2c_close(handle);
 }
 
-int
-get_pack_voltage(int handle)
+int16_t get_pack_voltage(int handle)
 {
   char buf[2];
 
@@ -39,12 +35,10 @@ get_pack_voltage(int handle)
     return -1;
   }
 
-  return ((buf[0] << 8) | buf[1]);
+  return ((buf[1] << 8) | buf[0]);
 }
 
-
-int
-get_pack_current(int handle)
+int16_t get_pack_current(int handle)
 {
   char buf[2];
 
@@ -56,9 +50,8 @@ get_pack_current(int handle)
     return -1;
   }
 
-  return ((buf[0] << 8) | buf[1]);
+  return ((buf[1] << 8) | buf[0]);
 }
-
 
 int
 is_pack_enabled(int handle)
@@ -71,8 +64,6 @@ is_pack_enabled(int handle)
   if (i2c_read(handle, &buf[0], 4) < 0) {
     return -1;
   }
-
-
 
   return ((buf[3] & 0x6) == 6);
 }
