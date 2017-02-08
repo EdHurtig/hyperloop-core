@@ -167,7 +167,6 @@ void *logging_main(void *arg) {
       if (result < 0) {
         running = false;
         fprintf(stderr, "Alert: Log Send Failed %d\n", result);
-        set_pod_mode(Emergency, "Log Send Failed");
       }
     } else {
       // No logs in the queue, lets sit for a while
