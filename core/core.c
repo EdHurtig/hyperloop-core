@@ -20,10 +20,6 @@
 #include "pru.h"
 #endif
 
-int lateralRead(pod_t *pod);
-int skateRead(pod_t *pod);
-int brakingRead(pod_t *pod);
-
 
 void common_checks(pod_t *pod) {
 
