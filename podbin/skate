@@ -1,0 +1,27 @@
+#!/bin/bash
+SOL=0
+SKATES="A/B"
+PIN=$SKT_AB_PIN
+
+if [ "$1" == "1" ]; then 
+  SOL=1
+  SKATES="C/D"
+  PIN=$SKT_CD_PIN
+fi
+if [ "$1" == "2" ]; then 
+  SOL=2
+  SKATES="E/F"
+  PIN=$SKT_EF_PIN
+fi
+if [ -z $2 ]; then 
+  printf "Skate A/B: \t"
+  get_pin $SKT_AB_PIN
+  printf "Skate C/D: \t"
+  get_pin $SKT_CD_PIN
+  printf "Skate E/F: \t"
+  get_pin $SKT_EF_PIN
+else
+  STATE=$2
+  echo "Setting Skate Set $SOL (p$PIN) to $STATE"
+  set_pin $PIN $STATE
+fi 

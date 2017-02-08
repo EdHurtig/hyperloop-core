@@ -1,0 +1,43 @@
+#!/bin/bash
+SOL=0
+ENG_PIN=$CLMP_0_ENG_PIN
+REL_PIN=$CLMP_0_REL_PIN
+
+if [[ $1 -eq 1 ]]; then 
+  SOL=1
+  ENG_PIN=$CLMP_1_ENG_PIN
+  REL_PIN=$CLMP_1_REL_PIN
+fi
+
+if [ -z $2 ]; then 
+  printf "Brake 0 Eng: \t"
+  get_pin $CLMP_0_ENG_PIN
+  printf "Brake 0 Rel: \t"
+  get_pin $CLMP_0_REL_PIN
+  printf "Brake 1 Eng: \t"
+  get_pin $CLMP_1_ENG_PIN
+  printf "Brake 1 Rel: \t"
+  get_pin $CLMP_1_REL_PIN
+else
+  STATE="1"
+  if [ ! -z $2 ]; then
+    STATE=$2
+  fi
+  case $STATE in
+  0) # CLOSED
+    echo "Closing Brake $SOL"
+    set_pin $ENG_PIN 0
+    set_pin $REL_PIN 0 
+    ;;
+  1) # ENGAGE
+    echo "Engaging Brake $SOL"
+    set_pin $ENG_PIN 1
+    set_pin $REL_PIN 0 
+    ;;
+  2) # RELEASE
+    echo "Releasing Brake $SOL"
+    set_pin $ENG_PIN 0
+    set_pin $REL_PIN 1 
+    ;;
+  esac
+fi 

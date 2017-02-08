@@ -1,0 +1,51 @@
+#!/bin/bash
+if [ -z $COASTING_TIME ]; then
+  echo "Set a COASTING_TIME"
+  exit 1;
+fi
+
+trap "{ emergency; exit; }" SIGINT SIGTERM EXIT
+
+brake 0 2
+brake 1 2
+wheel 0 0
+wheel 1 0
+wheel 2 0
+skate 0 0
+skate 1 0
+skate 2 0
+
+lat 0 1
+lat 1 1
+
+# Wait for pusher plate
+echo Waiting of Pusher Plate
+while [ true ]; do
+  if [ $(get_pin $PUSHER_PLATE_PIN) -eq "0" ]; then
+    break;
+  fi
+  sleep .01
+done
+
+skate 0 1
+skate 1 1
+skate 2 1
+
+# Brake 
+echo "Waiting for $COASTING_TIME"
+sleep $COASTING_TIME
+
+brake 0 1
+brake 1 1
+
+echo "Braking Stage sleeping for 60 seconds"
+sleep 60
+
+echo Releasing
+skate 0 0
+skate 1 0
+skate 2 0
+
+brake 0 2
+brake 1 2
+vent 0

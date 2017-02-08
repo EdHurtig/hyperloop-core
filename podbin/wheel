@@ -1,0 +1,24 @@
+#!/bin/bash
+SOL=0
+PIN=$WHEEL_0_PIN
+
+if [ "$1" == "1" ]; then 
+  SOL=1
+  PIN=$WHEEL_1_PIN
+fi
+if [ "$1" == "2" ]; then 
+  SOL=2
+  PIN=$WHEEL_2_PIN
+fi
+if [ -z $2 ]; then 
+  printf "Wheel 0: \t"
+  get_pin $WHEEL_1_PIN
+  printf "Wheel 1: \t"
+  get_pin $WHEEL_1_PIN
+  printf "Wheel 2: \t"
+  get_pin $WHEEL_1_PIN
+else
+  STATE=$2
+  echo "Setting Wheel $SOL to $STATE"
+  set_pin $PIN $STATE
+fi 

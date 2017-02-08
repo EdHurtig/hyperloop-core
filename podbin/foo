@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -z $1 ]; then 
+  printf "Vent Solenoid: "
+  get_pin $VENT_PIN
+else
+  STATE=1
+  if [ ! -z $1 ]; then
+    STATE=$1
+  fi
+  echo "Setting Vent Solenoid to $STATE"
+  set_pin $VENT_PIN $STATE
+fi 

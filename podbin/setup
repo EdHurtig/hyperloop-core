@@ -1,0 +1,70 @@
+#!/bin/bash
+
+for i in {48,88,89,10,11,9,81,8,80,78,79,76,77,74,75,72,73,70,71}; do
+  test -d /sys/class/gpio/gpio$i/ || echo $i > /sys/class/gpio/export
+done
+
+# Step 2: Check if any exports failed
+for i in {48,88,89,10,11,9,81,8,80,78,79,76,77,74,75,72,73,70,71}; do
+  test -d /sys/class/gpio/gpio$i/ || echo Missing gpio$i
+done
+
+# Step 3: Set direction to output
+for i in {88,89,10,11,9,81,8,80,78,79,76,77,74,75,72,73,70,71}; do
+  echo out > /sys/class/gpio/gpio$i/direction
+done
+
+echo in > /sys/class/gpio/gpio48/direction
+
+# Select Pins
+
+for i in {45,44,117,49,125}; do
+  test -d /sys/class/gpio/gpio$i/ || echo $i > /sys/class/gpio/export
+done
+
+# Step 2: Check if any exports failed
+for i in {45,44,117,49,125}; do
+  test -d /sys/class/gpio/gpio$i/ || echo Missing gpio$i
+done
+
+# Step 3: Set direction to output
+for i in {45,44,117,49,125}; do
+  echo out > /sys/class/gpio/gpio$i/direction
+done
+
+
+#Load Device Tree Overlay to Enable PRU
+#GPIO selection pins mux
+echo "PRU-GPIO-EXAMPLE" > /sys/devices/bone_capemgr.*/slots
+
+echo "BB-BONE-PRU-01" > /sys/devices/bone_capemgr.*/slots
+
+#Load Device Tree Overlay to Enable ADs
+
+#GPIO selection pins mux
+echo "cape-bone-iio" > /sys/devices/bone_capemgr.*/slots
+
+echo BB-I2C1 > /sys/devices/bone_capemgr.*/slots
+
+
+# enable the ADC
+#echo 'BB-ADC' > /sys/devices/platform/bone_capemgr/slots
+
+export SKT_AB_PIN="10"
+export SKT_CD_PIN="9"
+export SKT_EF_PIN="8"
+export CLMP_0_ENG_PIN="78"
+export CLMP_0_REL_PIN="76"
+export CLMP_1_ENG_PIN="74"
+export CLMP_1_REL_PIN="72"
+export WHEEL_0_PIN="70"
+export WHEEL_1_PIN="71"
+export WHEEL_2_PIN="73"
+export HP_FILL_PIN="75"
+export VENT_PIN="77"
+export LP_FILL_0_PIN="79"
+export LP_FILL_1_PIN="80"
+export LAT_0_PIN="81"
+export LAT_1_PIN="11"
+
+export PUSHER_PLATE_PIN="48"

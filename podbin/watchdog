@@ -1,0 +1,13 @@
+#!/bin/bash
+
+trap "{ emergency; }" EXIT
+trap "{ echo; echo ACKED; $0; }" SIGINT
+
+sleep 600
+
+for i in {1..12}; do
+	echo "=== WARNING WARNING WARNING === Issue CTRL+C to ack (Alert $i of 12)"	
+	sleep 10
+done
+
+

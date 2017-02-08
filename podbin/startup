@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#Load Device Tree Overlay to Enable PRU
+#GPIO selection pins mux
+echo "PRU-GPIO-EXAMPLE" > /sys/devices/bone_capemgr.*/slots
+
+echo "BB-BONE-PRU-01" > /sys/devices/bone_capemgr.*/slots
+
+#Load Device Tree Overlay to Enable ADs
+
+#GPIO selection pins mux
+echo "cape-bone-iio" > /sys/devices/bone_capemgr.*/slots
+
+echo BB-I2C1 > /sys/devices/bone_capemgr.*/slots
+exit 0
+# Emergency Controller Failure contingency
+if [ $? -ne 0 ]; then
+  brake 1 1 # Engage Rear Brake
+  sleep 0.1
+  brake 0 1 # Engage Front Brake
+
+  vent 0
+
+  sleep 60
+  brake 1 2 # Release Rear Brake
+  brake 0 2 # Release Front Brake
+
+  sleep 30
+
+  brake 1 0 # Close Rear Brake
+  brake 0 0 # Close Front Brake
+fi

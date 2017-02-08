@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for i in {10,11,9,81,8,80,78,79,76,77,74,75,72,73,70,71}; do
+    echo 0 > /sys/class/gpio/gpio$i/value
+done
+
+echo "All Relays Set To OFF"
+

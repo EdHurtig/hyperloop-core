@@ -1,0 +1,16 @@
+#!/bin/bash
+
+vent 0
+
+brake 0 1
+brake 1 1
+
+wheel 0 1
+wheel 1 1
+wheel 2 1
+
+lat 0 0
+lat 1 0
+
+skates 0
+

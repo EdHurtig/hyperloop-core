@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo 87 > /sys/class/gpio/export
+echo 86 > /sys/class/gpio/export
+
+echo out > /sys/class/gpio/gpio86/direction
+echo out > /sys/class/gpio/gpio87/direction
+echo 0 > /sys/class/gpio/gpio86/value
+echo 0 > /sys/class/gpio/gpio86/value
+echo 1 > /sys/class/gpio/gpio86/value
+echo 1 > /sys/class/gpio/gpio86/value
+
+
+emergency
+

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ -z $1 ]; then 
+  printf "HP Fill: "
+  get_pin $HP_FILL_PIN
+else
+  STATE=$1
+  echo "Setting HP Fill Solenoid to $STATE"
+  set_pin $HP_FILL_PIN $STATE
+fi 

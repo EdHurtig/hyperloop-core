@@ -1,0 +1,10 @@
+#!/bin/bash
+
+get_pin $PUSHER_PLATE_PIN;
+
+if [ $(get_pin $PUSHER_PLATE_PIN) -eq "1" ]; then
+  exit 0
+else
+  exit 1
+fi
+

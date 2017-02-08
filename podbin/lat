@@ -1,0 +1,22 @@
+#!/bin/bash
+SOL=0
+PIN=$LAT_0_PIN
+
+if [[ $1 -eq 1 ]]; then 
+  SOL=1
+  PIN=$LAT_1_PIN
+fi
+
+if [ -z $2 ]; then 
+  printf "Lat Fill 0: \t"
+  get_pin $LAT_0_PIN
+  printf "Lat Fill 1: \t"
+  get_pin $LAT_1_PIN
+else
+  STATE=1
+  if [ ! -z $2 ]; then
+    STATE=$2
+  fi
+  echo "Setting Lat Fill Solenoid $SOL to $STATE"
+  set_pin $PIN $STATE
+fi 
