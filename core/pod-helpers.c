@@ -179,8 +179,7 @@ void open_solenoid(solenoid_t *s) {
     // TODO: Prove
     setRelay(s->gpio, (s->value ? kRelayOff : kRelayOn));
     s->value = (s->value == 0 ? 1 : 0);
-  } else {
-    debug("Solenoid '%s' is already open", s->name);
+    debug("Solenoid '%s' is open", s->name);
   }
 }
 
@@ -194,8 +193,7 @@ void close_solenoid(solenoid_t *s) {
     // TODO: Prove
     setRelay(s->gpio, (s->value ? kRelayOff : kRelayOn));
     s->value = (s->value == 0 ? 1 : 0);
-  } else {
-    debug("Solenoid '%s' is already closed", s->name);
+    debug("Solenoid '%s' is closed", s->name);
   }
 }
 
@@ -247,4 +245,9 @@ bool setup_pin(int no) {
   error("Failed to setup pin %d", no);
 
   return false;
+}
+
+bool can_brake(pod_t *pod) {
+  return (get_value(&(pod->pusher_plate) == 0) &&
+         (get_time() - pod->pusher_plate_last_high + PUSHER_PLATE_DELAY) > 0);
 }
