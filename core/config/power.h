@@ -9,7 +9,7 @@
 #define N_POWER_THERMO 3
 #define POWER_THERMO_MUX THERMO_MUX_0
 #define POWER_THERMO_INPUTS                                                    \
-  { 10, 11, 12 }
+  { 13, 12, 11 }
 
 // --------------------------
 // Batteries
@@ -25,6 +25,6 @@
 #define N_FRAME_THERMO 1
 #define FRAME_THERMO_MUX THERMO_MUX_0
 #define FRAME_THERMO_INPUTS                                                    \
-  { 13 }
+  { 10 }
 
 #endif
