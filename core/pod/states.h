@@ -96,6 +96,7 @@ typedef struct {
   double cal_a;
   double cal_b;
   double cal_c;
+  double cal_d;
   // low pass filter alpha
   double alpha;
   // Mannual offset
