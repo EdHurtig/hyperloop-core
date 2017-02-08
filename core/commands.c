@@ -105,30 +105,60 @@ int ventCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
 }
 
 int timeoutCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
-  if (argc != 1) {
-    return snprintf(outbuf, outbufc, "Usage: timeout <type> [<value>]");
-  }
 
   pod_t *pod = get_pod();
 
+  if (argc == 1) {
+    return snprintf(outbuf, outbufc, "===Timeouts===\n"
+                    "Braking: %d sec\n"
+                    "Emergency: %d sec\n",
+                    pod->brake_timeout,
+                    pod->emergency_timeout);
+  }
 
-  if (argc != 1) {
+  if (argc != 3) {
     return snprintf(outbuf, outbufc, "Usage: timeout <type> [<value>]");
   }
-  if (strncmp(argv[1], "braking", strlen("braking")) == 0) {
+
+  if (strncmp(argv[1], "brake", strlen("brake")) == 0) {
     if (argc == 3) {
       int val = atoi(argv[2]);
       pod->brake_timeout = val;
     }
-    return snprintf(outbuf, outbufc, "Braking Timeout %d", pod->brake_timeout);
-
-
+    return snprintf(outbuf, outbufc, "Brake Timeout %d", pod->brake_timeout);
   }
-  if (is_pod_stopped(pod)) {
-    return snprintf(outbuf, outbufc, "Venting Started");
-  } else {
-    return snprintf(outbuf, outbufc, "Pod Not Determined to be Stopped, override solenoid to vent");
+
+  if (strncmp(argv[1], "emergency", strlen("emergency")) == 0) {
+    if (argc == 3) {
+      int val = atoi(argv[2]);
+      pod->emergency_timeout = val;
+    }
+    return snprintf(outbuf, outbufc, "Emergency Timeout: %d", pod->emergency_timeout);
   }
+  return snprintf(outbuf, outbufc, "Unknown Timeout '%s'", argv[1]);
+}
+
+int setCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
+  if (argc != 1) {
+    return snprintf(outbuf, outbufc, "Usage: set <thing> [<value>]");
+  }
+
+  pod_t *pod = get_pod();
+
+  if (argc != 1) {
+    return snprintf(outbuf, outbufc, "===Settings===\n"
+                    "Brake X: %d meters\n",
+                    pod->brake_x);
+  }
+
+  if (strncmp(argv[1], "brake_x", strlen("brake_x")) == 0) {
+    if (argc == 3) {
+      int val = atoi(argv[2]);
+      pod->brake_x = val;
+    }
+    return snprintf(outbuf, outbufc, "Braking X Position: %d meters", pod->brake_timeout);
+  }
+  return snprintf(outbuf, outbufc, "Unknown Setting '%s'", argv[1]);
 }
 
 
@@ -220,6 +250,15 @@ int exitCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
     pod_exit(atoi(argv[1]));
   } else {
     pod_exit(1);
+  }
+  return -1;
+}
+
+int pidCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
+  if (argc > 1) {
+    get_pod()->controller_pid = atoi(argv[1]);
+  } else {
+    return snprintf(outbuf, outbufc, "Please Provide a PID to signal");
   }
   return -1;
 }

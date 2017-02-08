@@ -220,7 +220,7 @@ typedef struct pod {
   // Pusher plate
   pod_value_t pusher_plate;
   pod_value_t pusher_plate_raw;
-  uint64_t last_pusher_plate_low;
+  uint64_t pusher_plate_last_high;
   bool pusher_plate_override;
 
   uint64_t launch_time;
@@ -271,8 +271,9 @@ typedef struct pod {
   enum pod_caution cautions;
   enum pod_warning warnings;
 
+  int32_t brake_x;
   int brake_timeout;
-
+  int emergency_timeout;
   bool calibrated;
 
   sem_t *boot_sem;
