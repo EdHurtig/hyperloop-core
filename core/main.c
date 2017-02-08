@@ -208,7 +208,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (get_pod_mode() != Boot) {
+  if (get_pod_mode() == Shutdown) {
     error("Remote Logging thread has requested shutdown, See log for details");
     pod_exit(1);
   }
@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Assert pod is still boot
-  if (get_pod_mode() != Boot) {
+  if (get_pod_mode() == Shutdown) {
     error("Command thread has requested shutdown, See log for details");
     pod_exit(1);
   }
