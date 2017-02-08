@@ -299,9 +299,11 @@ int pushCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
 
 int batteryCommand(int argc, char *argv[], int outbufc, char outbuf[]) {
   pod_t *pod = get_pod();
-  if (argc == 2) {
+  if (argc == 3) {
     if (strncmp(argv[1],"toggle", strlen("toggle")) == 0) {
-      int handle = i2c_open(I2CBUS, BATTERY_0_ADDRESS);
+      int bus = atoi(argv[2]);
+
+      int handle = i2c_open(bus, BATTERY_0_ADDRESS);
       int result = toggle_pack(handle);
       i2c_close(handle);
 
