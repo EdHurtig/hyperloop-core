@@ -10,7 +10,8 @@
 #define TUBE_LENGTH 1600
 #define STOP_MARGIN 100
 #define START_BRAKING 1100
-#define BRAKING_TIMER 15.8 // 4.9 + 10.9
+#define BRAKING_TIMER 15.8 * USEC_PER_SEC//
+#define EMERGENCY_TIMER 19.0 * USEC_PER_SEC // 4.9 + 10.9 + some
 /*
 
 Phase
@@ -36,6 +37,7 @@ Braking
 */
 
 #define PUSHER_PLATE_PIN 48
+#define PUSHER_PLATE_DELAY 3*USEC_PER_SEC
 
 // --------------------------
 // Relay
