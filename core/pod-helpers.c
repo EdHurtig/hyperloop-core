@@ -158,9 +158,11 @@ solenoid_state_t read_solenoid_state(solenoid_t *solenoid) {
   relay_state_t r = read_relay_state(solenoid->gpio);
   switch (r) {
     case kRelayOn:
+      set_value(&(solenoid->value), 1);
       return (solenoid->type == kSolenoidNormallyClosed ? kSolenoidOpen : kSolenoidClosed);
       break;
     case kRelayOff:
+      set_value(&(solenoid->value), 0);
       return (solenoid->type == kSolenoidNormallyClosed ? kSolenoidClosed : kSolenoidOpen);
       break;
     default:
